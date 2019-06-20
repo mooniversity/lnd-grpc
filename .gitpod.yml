@@ -3,4 +3,10 @@ image:
 tasks:
     - init: "./assets/scripts/initial-setup.sh"
       command: "./assets/scripts/recurring-setup.sh"
+ports:
+    - port: 8080
+      onOpen: ignore
+    - port: 10009
+      onOpen: ignore
+
 

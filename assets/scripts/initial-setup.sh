@@ -1,1 +1,1 @@
-pip install lnd_grpc
+pip3 install lnd_grpc
