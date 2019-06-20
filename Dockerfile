@@ -3,7 +3,7 @@ USER root
 
 WORKDIR /workspace
 
-RUN pip install lnd_grpc
+RUN pip3 install --user lnd_grpc
 
 # Update bashrc
 RUN echo "alias python='python3'" >> $HOME/.bashrc \
