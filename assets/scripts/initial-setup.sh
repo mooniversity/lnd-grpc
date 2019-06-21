@@ -1,7 +1,7 @@
-# Install lnd
-cd /workspace
-wget https://github.com/lightningnetwork/lnd/releases/download/v0.6.1-beta/lnd-linux-386-v0.6.1-beta.tar.gz
-tar -xzf ./lnd-linux-386-v0.6.1-beta.tar.gz
+#!/usr/bin/env bash
 
-# Install python libs
-pip3 install lnd_grpc
+# Install lnd
+mkdir /workspace/bin && cd /workspace/bin
+wget https://github.com/lightningnetwork/lnd/releases/download/${LND_VERSION}/lnd-linux-386-${LND_VERSION}.tar.gz
+tar -xzf lnd-linux-386-${LND_VERSION}.tar.gz && rm lnd-linux-386-${LND_VERSION}.tar.gz
+
