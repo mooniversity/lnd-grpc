@@ -5,7 +5,7 @@ WORKDIR /workspace
 
 # set the LND version to be installed and referenced throughout the workspace here
 RUN echo "export LND_VERSION='v0.6.1-beta'" >> $HOME/.bashrc
-RUN . $HOME/.bashrc
+RUN /bin/bash -c  'source $HOME/.bashrc'
 
 # add aliases
 RUN echo "alias python='python3'" >> $HOME/.bashrc \
