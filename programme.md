@@ -2,68 +2,69 @@
 
 ### 1. Environment
 
-1. The environment we are going to use today is an instance of vscode hosted by gitpod, which means it wil have python 3 installed already and includes a bash terminal we can run LND from.
+1. The environment we are going to use today is an instance of vscode hosted by gitpod, which means it wil have python 3 already installed and includes a terminal we can run LND inside.
 
-    1. We have aliased bash keyword 'python' to 'python3' and 'pip' to 'pip3' for you so there is no danger of accidentally using python2
+    1. We have aliased 'python' to 'python3' and 'pip' to 'pip3' for you so there is no danger of accidentally using python2
 
-    1. The LND binary has already been downloaded and unzipped by the docker image setup scripts and it will have started up automatically for you as you.
+    1. The LND binary has also already been downloaded and unzipped by the docker image setup scripts and it will have started up automatically for you too and begun syncing.
 
 1. As we are only going to run through the RPC library, not create a sample application, we are going to use the python REPL today so I am going to close the top and side windows, `alt-shift-c`, and reopen the terminal `cmd+j`
 
-    1. I will also close this extra terminal window as we will use splitscreen mode going forward.
+    1. I will also reposition this terminal window as we will use horizontally split terminal for the tutorial so that we can see LNDs logs along with the results of our commands.
 
-1. In this terminal tab you can see that quite a lot has been happening. If you've run LND before you will recognise this as LND syncing. We can see a number of activities happening currently, `Processing blocks`, `verifying block headers` and the occasional `cfheaders` queries. This is what we expect to see at this stage.
+1. In the LND terminal tab you can see that quite a lot has been happening. If you've run LND before you will recognise this log output as LND syncing. We can see a number of activities happening: `Processing blocks`, `verifying block headers` and the occasional `cfheader` queries. This is what we expect to see at this stage.
 
-    1. If we scroll up to the top we can see how this all began; the shell executed the startup scripts we defined in the project.
+    1. If we scroll up to the top we can see how this all began; the shell executed the startup scripts we defined at the project level.
 
     1. Where the output changes format we can tell that LND was started.
 
     1. We can see various bit of information here...
 
-    1. We can see that it is `Waiting for wallet encryption password`, which it is prompting us to use `lncli` to create, so this seems like a good time to move onto RPC control.
+    1. We can also see that it is `Waiting for wallet encryption password`, which it is prompting us to use `lncli` to create, so this seems like a good time to move onto some RPC control, as this is something we can do via python RPC.
 
 ----
 
 ### 2. Install lnd_grpc
-1. First I am going to split my terminal screen and move them horizontally split so we can see both outputs.
 
-1. After that, we next need to install the lnd-grpc module. As this is hosted on pip, it super easy:
+1. We start in our command terminal, and first we need to install the lnd-grpc python module. As this is hosted on the 'pip' python package installer, it is super easy to install:
 
     ```bash
     pip install lnd_grpc
     ```
   
-1. The last line of this should read that it has successfully installed lnd-grpc and it's dependencies.
+1. The last line after running this command should read that it has successfully installed lnd-grpc and its dependencies.
   
 ----
 
 ### 3. Initialise the rpc connection
 1. Now we are ready to connect to LND's RPC using python.
 
-1. Open a python REPL from the terminal simply by typing `python` into the prompt. A REPL is basically a code evaluator which runs line by line.
+1. Open a python REPL from the terminal simply by typing `python` into the prompt. A REPL is basically a live code evaluator which runs and executes your code line by line, each time you finish a statement. The REPL is usually clever-enough to know when you are entering a multi-line code fragment, vs when you are trying to execute code as it has some understanding of python syntax.
 
-1. Next we need to import the `Client` class from the package. This class holds all the RPC methods you need to interact with LND: 
+1. With the REPL open we need to import the `Client` class from the lnd_grpc package. This class holds all the RPC methods you need to interact with LND as is a super-class encompassing various different RPC servers, which I will explain in more detail later. 
     
     ```python
     from lnd_grpc import Client
     ```
 
-1. Now we are ready to create a new client object called 'lnd': 
+1. Now we are ready to create a new client object called 'lnd'. We will issue our commands to LND via this object and it will handle creating the Google RPC connection channels and stubs for us automatically. `Client` can take a number of arguments at instantiation, but as we have LND installed in default location and using default data directory, all we need to pass it is the `network='testnet'` flag which indicates we want to run on testnet -- we're not going to be that reckless yet! 
     
     ```python
     lnd = Client(network='testnet')
     ```  
-1. Now that we have a client object, it is probably a good time to open a tab with all the LND RPC commands for later use: [lnd-grpc-api-reference](https://api.lightning.community/?python#lnd-grpc-api-reference)
-  You can also access the docstring help using standard Python `help(Class.method)` syntax
+1. Now that we have a client object, it is probably a good time to open a browser tab with all the LND RPC commands for later use: [lnd-grpc-api-reference](https://api.lightning.community/?python#lnd-grpc-api-reference). The way that lnd_grpc has been constructed, each method is available to the `Client` class by converting the 'CamelCase' name to 'lowercase_with_underscores', so `WalletBalance` would become `wallet_balance` in lowercase.
+
+  You can also access the built-in docstring help using standard Python `help(Class.method)` syntax, but it's possible for the docstrings to become outdated, and they are less detailed than the api reference, so I would recommend using the online resource.
 
 ----
 
-### 5. Initialise LND with a new wallet via WalletUnlocker Service
+### 4. Initialise LND with a new wallet via `WalletUnlocker` Service
+
 1. If you recall, when we checked the output of LND earlier it said ```Waiting for wallet encryption password. Use `lncli create` to create a wallet, `lncli unlock` to unlock an existing wallet, or `lncli changepassword` to change the password of an existing wallet and unlock it.```
 
 1. As we have not created a wallet before, we first need to initialise one.
 
-1. To initialise a new LND wallet you must first provide or generate a seed. This seed is what your private keys are derived from. To get LND to generate a seed instead of providing your own is as simple as:
+1. To initialise a new LND wallet you must first provide or generate a seed. This seed is what your private keys are derived from. To get LND to generate a seed, you can provide your own if you have another truly random method of generating one which you are happy with, is as simple as calling `gen_seed()`:
 
     ```python
     seed = lnd.gen_seed()
@@ -77,120 +78,120 @@
     lnd.init_wallet(wallet_password='password', cipher_seed_mnemonic=seed.cipher_seed_mnemonic)
     ```
 
-1. Once the wallet has been initialised for the first time, LND will also do a quick re-scan of the blockchain for transactions related to the wallet. This is because we might be "initialising" an already used wallet or recovering an old wallet. In the case of a new wallet, it predicatably won't find anything of interest to it.
+1. Once the wallet has been initialised for the first time, LND will do a quick re-scan of the blockchain for transactions related to the wallet. The reason for this is because we might be recovering an already used wallet -- if we had provided a seed that we had already used before instead of the freshly generated one. If that was the case you might want to alter the `recovery_window` parameter at the same time. In the case of a new wallet, it predictably won't find anything of interest to it and the re-scan should be very fast.
     
-1. Its important to note that once the wallet has been created you won't need to run `init_wallet` again, but you will need to unlock (technically decrypt) your wallet after restarting the lnd daemon. If you leave LND daemon running but simply restart the python REPL then the wallet will not lock, and you won't even need to unlock it to resume RPC functionality.
+1. Its important to note that once the wallet has been created you won't need to run `init_wallet` again, but you *will* need to _unlock_ your wallet after restarting the lnd daemon. If you leave LND daemon running but simply restart the python REPL then the wallet will not lock, and you won't even need to issue unlock RPC commands to resume RPC control.
 
-1. You can unlock a locked wallet with the `unlock_wallet` command:
+1. We can unlock a locked wallet with the `unlock_wallet` command with the `wallet_password` argument:
 
     ```python
     lnd.unlock_wallet(wallet_password='password')
     ```
     
-1. When the wallet seed is stored on your system it is encrypted and the wallet password is simply the key to decrypt the seed.
+    1. When the wallet seed is stored on your system it is encrypted and the wallet password is simply the key to decrypt the seed.
 
-1. Unlocking the wallet also and also starts the Lightning RPC server.
-
-----
-
-### 6. Check the connection to Lightning Service
-1. Next we can check thew we can connect to the Lightning RPC server.
-
-1. Generating a seed, initialising a wallet and unlocking a wallet are all handled by the `WalletUnlocker` RPC server, which has limited capability. When the wallet is unlocked sucessfully the `Lightning` RPC server will be started.
-
-1. We can check that we can access it using `lnd.get_info()` which should return the node info
-
-1. check `lnd.wallet_balance()` returns empty sucessfully
+    1. Unlocking the wallet also starts the Lightning RPC server.
 
 ----
 
-### 7. Get testnet Bitcoins
-1. First we have to make sure that we are synced to the network fully:
+### 5. Check the connection to Lightning Service
+
+1. Generating a seed, initialising a wallet and unlocking a wallet are all handled by the `WalletUnlocker` RPC server, which has limited capability. When the wallet is unlocked successfully the `Lightning` RPC server will be started, and in fact the `WalletUnlocker` service will become unavailable. If you want to see what this might look like, you can try to call a `get_info()` from LND while the wallet is still locked: you should see a `status = StatusCode.UNIMPLEMENTED` grpc error. This is the tell-tale sign that the GRPC server you are trying to talk to is offline or un-contactable.
+
+1. With that in mind, we can check that the Lightning RPC server has started up as expected after unlocking the wallet, and better still, that we can connect to and control it from our python Client object.
+
+1. A simple and non-destructive way to test that we can access it is by using `lnd.get_info()` which should return some general info about the node.
+
+    ```python
+    lnd.get_info()
+    ```
+  
+  1. If this returns some general info on the node then we are unlocked and good to proceed. If it says it's unavailable, then the wallet is likely still locked or not yet created.
+
+----
+
+### 6. Get testnet Bitcoins
+
+1. With the Lightning RPC server available we are ready to receive some test-bitcoins into our wallet. However there is slight limitation on first run and subsequent re-connections: we have to make sure that we are synced to the network and more importantly fully caught up to the current block. This can be established by testing the result of:
 
     ```python
     lnd.get_info().synced_to_chain
     ```
-    ... should return True
     
-1. Generate a new receive address:
+    ... which should return `True` if synced.
+
+    1. I would note that GRPC has a long-known quirk whereby it hardcodes an `omitempty` setting, which means that False booleans and zero integers are not returned by default, and there is in fact no way to correct this yet! However, if you are aware of the attribute you want to test, you can still test it and it will display the correct result. This is why when you run `get_info()` you might not see a `synced_to_chain` attribute at all if it's False! However, you _will_ see it when it's True, or if you test it directly using:
+    
+1. When we are synced, we can generate a new receive address using the `new_address` method:
 
     ```python
     addr = lnd.new_address('p2wkh')
-    ```  
+    ```
+  
+    1. The two receive address types in LND are Pay To Witness Key Hash and Nested Pay To Witness Key Hash.
+  
+    1. If you going to send from a reasonably modern wallet which supports sending to bech32 addresses you can use the `p2wkh` address type, but if you happen to need compatibility with an outdated wallet which can't handle sending to bech32 yet, then you can use `np2wkh` which embeds a `p2wkh` address inside an older `P2SH` address format and who's real full name for this reason is `P2SH-P2WPKH`. Get a new wallet would be my advice in this case!
+    
+1. With our address we can now receive some testnet bitcoin. If you have some testnet bitcoin on a mobile device then I would recommend copying your address into an online QR code generator such as [qr code generator](https://www.the-qrcode-generator.com), making sure to use 'text mode' and not something that will automatically add "www." and ".com" to it. Otherwise you cna use regular copy and paste.
 
-1. Create a QR code to get some testnet bitcoin. If you are using Jupyter Notebook you can run the following, otherwise you can print and copy your address using `print(addr.address)` and then display it with an online QR code reader such as [qr code generator](https://www.the-qrcode-generator.com):
-
+    1. If you don't have any testnet bitcoin, you can get some from Coinfaucet.eu's [testnet faucet](https://coinfaucet.eu/en/btc-testnet/)
+ 
+    You can display your address in a copy-friendly format be accessing the address attribute directly:
+    
     ```python
-    import qrcode
-    from IPython.display import display
-    qr_code = qrcode.make(addr.address)
-    display(qr_code)
+    addr.address 
     ```
     
-1. Wait for confirmations. Unfortunately testnet blocktimes can be between 1 minute and 20 minutes due to its nature, so hopefully we don't have to wait long. You can check whether your coins are confirmed using `lnd.wallet_balance()` which will show it as unconfirmed balance when it has seen it on the network.
+1. Wait for confirmations. Unfortunately testnet blocktimes can be between 1 minute and 20 minutes due to its nature of people testing minig equipment on there, so hopefully we don't have to wait long. You can check whether your coins are confirmed using `lnd.wallet_balance()` which will show it as `unconfirmed` or `confirmed balance` when it has seen it on the network.
 
 ----
 
-### 8. Connect to peers
-1. In the meantime we can connect to some peers. There are two peer connection methods in lnd-grpc, one which is the default lnd RPC command `connect_peer` and one which simplifies address entry, `connect`. connect_peer requires a ln.LightningAddress object as argument, whereas `connect` allows you to pass the address in string format as `"node_pubkey@host:port"`:
+### 7. Connecting to peers and opening a channel
 
-    1. `lnd.connect_peer(addr: ln.LightningAddress)` or
-    2. `lnd.connect(address)`
+1. In the meantime we can connect to some peers. There are two peer connection methods in lnd-grpc, one which is the default lnd RPC command `connect_peer` and one which simplifies address entry, `connect`. connect_peer requires a ln.LightningAddress object as argument, whereas `connect` allows you to pass the address in the commonly found string format as `node_pubkey@host:port`.
 
-1. To more easily swap node pubkeys, which you can obtain from `lnd.get_info().identity_pubkey`, perhaps a good idea to paste them into a google document: [node pubkeys](https://docs.google.com/spreadsheets/d/1eXq1bJFH_5I6ID2kpeJBdOkN5RMQCZmIug3GTgN2G6Y/edit#gid=0)
-
-1. If on Kubernetes, to get the IP address of workshop peers, open a new terminal (not python) window, and simply type `hostname -i`. This should return the required ip address.
-
-1. The default port of 9735 is being used.
-
-1. The suggestion would be to use the `connect` command, but you can try either!
-
-    ```python
-    lnd.connect(address="node_pubkey@ip_address:port")  
-    ```
-1. Open a balanced channel with lightning faucet:
+    Let's connect to Lightning Labs' [Testnet Lightning Faucet](https://faucet.lightning.community) using the `connect` method today:
 
     ```python
     lnd.connect('0270685ca81a8e4d4d01beec5781f4cc924684072ae52c507f8ebe9daf0caaab7b@159.203.125.125')
-    lnd.open_channel_sync(node_pubkey_string='0270685ca81a8e4d4d01beec5781f4cc924684072ae52c507f8ebe9daf0caaab7b', local_funding_amount=500000, push_sat=250000)
     ```
     
-1. Note that connecting is *not1. the same as opening a channel, it is simply a networking-level connection, but it helps to find peers using ip addresses in case you do not have the full network graph info (or they do not appear in your network graph).
+    1. Note that connecting is *not* the same as opening a channel, it is simply a networking-level connection, but it helps to find peers using ip addresses in case you do not have the full network graph info (or they do not appear in your network graph).
 
 1. You can see which peers you are connected to at any time using
     ```python
     lnd.list_peers()
     ```
 
-1. It might also be fun to connect to and open a channel to a regular testnet peer too, so that we are not stuck on our own micro-lightning network. Find a peer on [1ml-testnet](https://1ml.com/testnet) to connect to as above.
+1. You can find more testnet peers on [1ml-testnet](https://1ml.com/testnet) to connect to as above if you want to try a few more.
 
 ----
 
-### 9. Open a channel
+### 8. Opening a channel
 
 1. Next up is to finally open a channel with a peer. As we are already `connect`-ed to them, we only need to provide the pub_key and local funding amount to start.
 
-1. We will start with the synchronous version of open channel, as it blocks while it opens, but then nicely returns the result for us to see.
+1. We will start with the synchronous version of open channel, which, although it blocks the thread while it open the channel, returns the result for us automatically to see success or failure.
 
-1. As we are using hex-encoded node_pubkeys (as returned by get_info), we must be careful to use the proper argument, `node_pubkey_string` rather than `node_pubkey`:
+1. As we are using hex-encoded node_pubkeys (as returned by `get_info` or found online), we must be careful to use the `node_pubkey_string` argument, rather than `node_pubkey` which is expecting bytes!
+
+1. To cheat a current limitation of the network that is not initially having any inbound liquidity, and make sure we can both send and receive funds, we will open a balanced channel with Lightning Labs' [Testnet Lightning Faucet](https://faucet.lightning.community) by pushing, or giving for *free*, some satoshis to their side during channel open. This is equivalent to giving them free money on mainnet, so to get inbound capacity and the ability to receive on there you should *not* do this and shoudl instead investigate other means such as using Lightning's "Loop In" or buying inbound liquidity off a provider.
 
     ```python
-    lnd.open_channel_sync(node_pubkey_string="", local_funding_amount)
+    lnd.open_channel_sync(node_pubkey_string='0270685ca81a8e4d4d01beec5781f4cc924684072ae52c507f8ebe9daf0caaab7b', local_funding_amount=500000, push_sat=250000)
     ```
     
-1. If successful, you will see the funding txid returned
+1. If successful, you will see the funding txid returned in the terminal, and can also check the output of `lnd.list_channels()` to see if you now have channel open to their pubkey.
 
-1. Try to open a channel with at least one local peer and your 'WAN' peer from 1ML databse.
+    ```python
+    lnd.list_channels()
+    ```
 
-1. If you are struggling to open any channels, you can first `connect()` to [lightning faucet](https://faucet.lightning.community).
-
-    1. Once connected to them you can use their form to request they open a channel with you, you can even "cheat" a bit and request a balanced channel by setting 'initial balance' to half of the channel capacity.
+    1. Once you have opened the channel to them, you can easily have them open a second (balanced) one back to you by can using the form on their website to request they initiate opening a channel with you.
     
-    1. They will be able to find you by your pubkey, using your (outbound) connection and (outgoing, not 9735) port you just initiated with them.
-
 ----
 
-### 10. Create an invoice
+### 9. Create an invoice
 
 1. Now we want to make a payment. Although direct 'key_send'/'sphinx send' is technically possible on mainnet today, we will use the standard invoice-payment lightning model
 
@@ -211,7 +212,7 @@
     
 ----
 
-### 11. Pay an invoice
+### 10. Pay an invoice
 
 1. First we need to share these BOLT11-encoded payment requests. This is ually done via other channels, e.g. through a web interface, as we have none, we can use google docs again: [invoice payment_requests](https://docs.google.com/spreadsheets/d/1eXq1bJFH_5I6ID2kpeJBdOkN5RMQCZmIug3GTgN2G6Y/edit#gid=1809562352)
 
@@ -233,7 +234,7 @@
 
 ----
 
-### 12. Backup
+### 11. Backup
 
 1. Now that we have opened some channels, it's the perfect time to back them up. LND has static channel backups (SCB) which, although not perfect, is the best option we have to offer at this stage.
 
@@ -302,7 +303,7 @@
   
 ----
 
-### 13. Threading of streaming 'subscription' RPCs
+### 12. Threading of streaming 'subscription' RPCs
 
 1. There are multiple 'subscribe' RPC calls which setup a server-client stream to notify the client of new events. As they are implemented, these will naturally block the single Python GIL thread, so we must setup threads to run these sanely.
 
@@ -329,7 +330,7 @@
   
 ----
 
-### 14. Hold Invoices
+### 13. Hold Invoices
 
 1. Quite a complicated workflow, where the main difference from normal invoice process is that the receiver does not have to settle the invoice immediately -- they can 'refuse' the payment.
 
