@@ -189,27 +189,48 @@
 
     1. Once you have opened the channel to them, you can easily have them open a second (balanced) one back to you by can using the form on their website to request they initiate opening a channel with you.
     
+    1. It might also be nice for redundancy to open a second channel to a highly-connected node such as Acinq's testnet node:
+    
+        ```python
+        lnd.connect("03933884aaf1d6b108397e5efe5c86bcf2d8ca8d2f700eda99db9214fc2712b134@34.250.234.192:9735")
+        lnd.open_channel_sync(node_pubkey_string='03933884aaf1d6b108397e5efe5c86bcf2d8ca8d2f700eda99db9214fc2712b134', local_funding_amount=500000)
+        ```
+
+1. Once the channels opens are confirmed you can check the total balance you have available within channels using
+
+    ```python
+    lnd.channel_balance()
+    ```
+    
 ----
 
 ### 9. Create an invoice
 
-1. Now we want to make a payment. Although direct 'key_send'/'sphinx send' is technically possible on mainnet today, we will use the standard invoice-payment lightning model
+1. The first step to receiving a payment via lightning currently is to create an invoice. This invoice encodes the receiver's node pubkey, the payment hash, the amount, the memo and the expiry in the `payment_request`.
 
-1. First, the receiver must create an invoice. This is easily done with `lnd.add_invoice()` which needs no additional parameters, not even a value! However conventionally the receiver requests a 'value' at least. A zero-value invoice can have any amount paid to it otherwise... It's useful to add a memo to the invoice both for yourself, and because this will get passed as part of the invoice to the recipient.
+1. Adding an invoice is easily done with `lnd.add_invoice()` which needs no additional parameters, not even a value! However conventionally the receiver requests a 'value' at least. A zero-value invoice can have any amount paid to it...
+
+    1. It's useful to add a memo to the invoice both for yourself, and because this will get passed as part of the invoice to the recipient and stored with the invoice in your database for future reference.
 
     ```python
-    invoice = lnd.add_invoice(value=5000, memo='test invoice from ?')
+    invoice = lnd.add_invoice(value=5000, memo='test invoice')
     invoice
     ```
     
-1. You can see the r_hash ('payment hash') as raw bytes, and the hex-encoded payment request along with the add_index. As the creator of the invoice, we also know the preimage ('r_preimage) and various other details, which we can expose by looking up the invoice by the payment hash. To avoid bytes conversions and other issues, we will simply reference the `invoice`'s .r_hash attribute in the lookup_invoice() method:
+    1. You can see the r_hash ('payment hash') as raw bytes, and the hex-encoded payment request along with the add_index.
+    
+1. As the creator of the invoice, we also know the preimage ('r_preimage) and various other details, which we can expose by looking up the invoice by the payment hash.
 
-    ```python
-    lnd.lookup_invoice(r_hash=invoice.r_hash)
-    ```
+1. As the creator of the invoice we have some extra information which is not encoded in the payment request, specifically the invoice preimage, which is only revealed upon promise to pay from the buyer, and allows them and all other links in the payment chain to claim the funds.
+
+    1. We can lookup the invoice using the `lookup_invoice` method.
     
-    This will reveal the preimage, which is what we will reveal to the sender, upon receiving their "promise to pay".
-    
+    1. To avoid bytes conversions and other issues, we will simply reference the `invoice` object's .`r_hash` attribute in the `lookup_invoice()` method:
+
+        ```python
+        lnd.lookup_invoice(r_hash=invoice.r_hash)
+        ```
+
 ----
 
 ### 10. Pay an invoice
@@ -307,16 +328,16 @@
 
 1. There are multiple 'subscribe' RPC calls which setup a server-client stream to notify the client of new events. As they are implemented, these will naturally block the single Python GIL thread, so we must setup threads to run these sanely.
 
-  ```python
-  import threading
-  def sub_invoices():
+    ```python
+    import threading
+    def sub_invoices():
       for response in lnd.subscribe_invoices():
           print('\n\n-------\n')
           print(f'New invoice from subscription:\n{response}\n\n')
-  
-  invoice_sub = threading.Thread(target=sub_invoices, daemon=True)
-  invoice_sub.start()
-  ```
+
+    invoice_sub = threading.Thread(target=sub_invoices, daemon=True)
+    invoice_sub.start()
+    ```
   
 1. Once the thread has started, you can create a new invoice and watch the subscription detect it.
 
