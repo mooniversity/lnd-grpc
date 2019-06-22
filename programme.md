@@ -196,7 +196,7 @@
         lnd.open_channel_sync(node_pubkey_string='03933884aaf1d6b108397e5efe5c86bcf2d8ca8d2f700eda99db9214fc2712b134', local_funding_amount=500000)
         ```
 
-1. Once the channels opens are confirmed you can check the total balance you have available within channels using
+1. Once the channels opens are confirmed you can check the total balance you have available summed over all channels using
 
     ```python
     lnd.channel_balance()
@@ -204,7 +204,7 @@
     
 ----
 
-### 9. Create an invoice
+### 9. Receiving a payment
 
 1. The first step to receiving a payment via lightning currently is to create an invoice. This invoice encodes the receiver's node pubkey, the payment hash, the amount, the memo and the expiry in the `payment_request`.
 
@@ -225,53 +225,65 @@
 
     1. We can lookup the invoice using the `lookup_invoice` method.
     
-    1. To avoid bytes conversions and other issues, we will simply reference the `invoice` object's .`r_hash` attribute in the `lookup_invoice()` method:
+    1. We will simply use the `r_hash` attribute of the `invoice` object we just created in the `lookup_invoice()` method:
 
         ```python
         lnd.lookup_invoice(r_hash=invoice.r_hash)
         ```
+        
+        Here we can see all the details we hold related to that invoice.
 
 ----
 
-### 10. Pay an invoice
+### 10. Making a payment
 
-1. First we need to share these BOLT11-encoded payment requests. This is ually done via other channels, e.g. through a web interface, as we have none, we can use google docs again: [invoice payment_requests](https://docs.google.com/spreadsheets/d/1eXq1bJFH_5I6ID2kpeJBdOkN5RMQCZmIug3GTgN2G6Y/edit#gid=1809562352)
-
-1. Once you have retrieved the payment request of the invoice you wish to pay, and especially for this method we have used of communicating them where there is a good chance they might get mixed up, it is a good idea to decode the payment request and check that it is as you expect.
+1. To pay someone on the lightning network you first need to get a BOLT11-encoded invoice, also know as `payment request`, from them. Once you _have_ the payment request, it is good practice to verify that it is specifying the amount and pubkey you expected, which we can do be decoding the payment request using `lnd.decode_pay_req()`.
    
     ```python
-    lnd.decode_pay_req(pay_req="payment_request_string")
+    lnd.decode_pay_req(pay_req=invoice.payment_request)
     ```
     
-1. The payment request is similarly decoded and checked using the `lncli` workflow, except it appears to happen automatically when you use their `payinvoice` command - you are prompted to confirm the description, amount and destination.
+1. The payment request is automatically decoded and checked when using the `lncli` workflow when you use their `payinvoice` command - you are prompted to confirm the description, amount and destination, having to manually type `yes` before any payment takes place.
 
-1. If the payment request is correct, then we can pay the invoice using `send_payment()` command:
+1. If the payment request is correct, then we can pay the invoice using `send_payment()` command. We will use `send_payment_sync()` this time, which is the synchronous/blocking form of the call. Using this is easier at first because it will wait, but block, until the payment has succeeded and then return confirmation or error to you immediately.
+
+    * By contrast, `send_payment()` will return an iterator object to you to be iterated on, but without blocking the main thread whilst waiting for payment to be completed.
+    
+1. Because we might not have a friend who is also using testnet who can invoice us, we can always get a fresh invoice off Acinq's handy 'Starblocks' testnet coffee shop [Starblocks](https://starblocks.acinq.co)
+
+1. Copy the payment request string to your clipboard and paste it into the `send_payment_sync()` command as `payment_request`'s argument:
 
     ```python
     lnd.send_payment_sync(payment_request="payment_request_string")
     ```
     
-1. If successful, the payment preimage (r_preimage) will be displayed, along with the payment_hash (r_hash) and the route. If it fails, an appropriate error will be returned in full.
+1. If the payment is successful, the payment preimage (r_preimage) will be displayed, along with the payment_hash (r_hash) and the route. If it fails, an appropriate error will be returned in full.
+
+    1. If you are getting an error at this stage, the most likely issue is that, because this is testnet where nodes go on and offline regularly, your node is struggling to find a route. `connect()` to some more nodes you see on [1ml-testnet](https://1ml.com/testnet) open a channel with a few more that appear to be highly connected, both in terms of channel count and liquidity. Wait until the channel is open and try again.
+    
+        In my experience path-finding certainly seems to be much more of an issue on test-net than on main-net, where nodes are financially incentivised to stay online and have channels with good utility, i.e. balanced channels which can be used for routing payments.
 
 ----
 
-### 11. Backup
+### 11. Backing up your on-chain wallet and channels*
 
-1. Now that we have opened some channels, it's the perfect time to back them up. LND has static channel backups (SCB) which, although not perfect, is the best option we have to offer at this stage.
+1. Now that we have some newly-opened some channels, it's the perfect time to back them up. LND has static channel backups (SCB) which, although not perfect nor the final vision of lightning backups, is the best option we have available to us at this stage.
 
-  **1. Note that the below is specifically a channel backup and restore process. To backup and restore on-chain funds, only the `cipher_seed_mnemonic`. The `wallet_password` only encrypts this wallet on the disk. ***
+  **1. Note that the below is specifically a channel backup and restore process. To backup and restore on-chain funds, only the `cipher_seed_mnemonic` is required. As I mentioned earlier the `wallet_password` only encrypts this seed whilst it is stored on the disk. ***
 
 1. SCB protocol will attempt to recover on-chain and payment channel balances, although only on-chain is fully guaranteed.
 
-1. Although LND will create a `channel.backup` file automatically, it might not always be up to date. Make an up-to-date version using:
+1. Although LND will create a `channel.backup` file automatically, it might not always be up to date. Times when you would want to make a new backup would include each time you opened and closed a channel. IN fact, LND recently added a `subscribe_channel_events()` streaming RPC which can alert you to such occasions.
+
+1. We can make an up-to-date version using:
 
     ```python
     backup = lnd.export_all_channel_backups()
     ```
   
-  **1. As we are not writing this backup to disk, only storing as a variable, be sure not to close this Notebook Window if you want to test a full delete and restore! ***
+  *** As we are not writing this backup to disk, only storing as a variable, be sure not to close this Notebook Window if you want to test a full delete and restore! ***
     
-1. Next it makes sense to verify that the backup will work, which you can do using:
+1. Next it makes sense to verify that the backup will work, which you can do using the handy `verify_chan_backup()` RPC.
 
     ```python
     lnd.verify_chan_backup(multi_chan_backup=backup.multi_chan_backup)
@@ -279,25 +291,26 @@
     
 1. If you want to test the full workflow, you can try to delete the channel database and restore it:
 
-1. Stop LND (ctrl+c in its terminal window), and then delete the channel.db using
+1. Keeping this python REPL open, as we have not writted the backup to disk yet. Then stop LND (ctrl+c in its terminal window), and then delete the channel.db using
 
     ```bash
     rm ~/.lnd/data/graph/testnet/channel.db
     ```
   
-1. Now you can restart LND in the terminal using the same command used in 2. above. Switch back to the Jupyter Notebook and try to unlock the wallet using the same 'lnd' object -- it should still work even though LND node has been restarted:
+1. Now you can restart LND in the terminal using bash command `lnd`. Switch back to the python REPL and try to unlock the wallet using the same 'lnd' object -- it should still work even though LND node has been restarted:
 
     ```python
     lnd.unlock_wallet(wallet_password='password')
     ```
     (or whatever password you chose in 5.)
 
-1. If the wallet unlocks, you can check that your previously-opened channels are not lost from the database: 
+1. If the wallet unlocks, you can check that your previously-opened channels have been lost from the database: 
 
     ```python
     lnd.list_channels()
     ```
-    should return nothing.
+    
+    ... should return nothing.
     
 1. Now lets try the restore:
 
@@ -305,7 +318,9 @@
     lnd.restore_chan_backup(multi_chan_backup=backup.multi_chan_backup.multi_chan_backup)
     ```
   
-  If successful, it will still take a while for LND to recover the funds back into the on-chain wallet. The SCB protocol (more specifically the Data Loss Protection [DLP] protocol) requests that the channel partner force closes the channel. Before they do though, they'll send over the channel reestablishment handshake message which contains the unrevoked commitment point which we need to derive keys (will be fixed in BOLT 1.1 by making the key static) to sweep our funds.
+  If successful, it will still take a while for LND to recover the funds back into the on-chain wallet. The SCB protocol (more specifically the Data Loss Protection [DLP] protocol) requests that the channel partner force closes the channel as a method of returning the off-chain funds back to the on-chain wallet, which the backup can better handle.
+  
+  Before they do though, they'll send over the channel reestablishment handshake message which contains the unrevoked commitment point, which we need to derive the keys needed to sweep our funds back. This is due to be improved in Lightning protocol spec upgrade 1.1 by making the key static.
   
 1. We can observe the log in the terminal session running LND to try and watch for the SCB process to complete. The first step takes around 60 seconds, but after that requires some on-chain confirmations, so total time can vary. A selection of lines to watch for in the log as progress: 
 
