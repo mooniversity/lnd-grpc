@@ -5,7 +5,7 @@ WORKDIR /workspace
 
 # set the LND version to be installed and referenced throughout the workspace here
 ENV LND_VERSION "v0.7.0-beta-rc2"
-RUN echo "export LND_VERSION='v0.7.0-beta-rc2.'" >> $HOME/.bashrc
+RUN echo "export LND_VERSION='v0.7.0-beta-rc2'" >> $HOME/.bashrc
 RUN /bin/bash -c  'source $HOME/.bashrc'
 
 # add aliases
