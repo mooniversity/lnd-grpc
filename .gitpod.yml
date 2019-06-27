@@ -1,7 +1,7 @@
 image:
     file: Dockerfile
 tasks:
-    - init: "./assets/scripts/initial-setup.sh"
+    - before: "./assets/scripts/initial-setup.sh"
     - command: "./assets/scripts/recurring-setup.sh"
     - command: "./assets/scripts/lnd1.sh"
     - command: "./assets/scripts/lnd2.sh"
