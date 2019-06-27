@@ -3,9 +3,8 @@ image:
 tasks:
     - init: "./assets/scripts/initial-setup.sh"
     - command: "./assets/scripts/recurring-setup.sh"
-    - command: /workspace/bin/bitcoin-0.18.0/bin/bitcoind -datadir=/workspace/bitcoin/.bitcoin
-    - command: /workspace/bin/lnd-linux-amd64-v0.7.0-beta-rc2/lnd --lnddir=/workspace/lnd/.lnd
-    - command: /workspace/bin/lnd-linux-amd64-v0.7.0-beta-rc2/lnd --lnddir=/workspace/lnd/.lnd2
+    - command: "./assets/scripts/lnd1.sh"
+    - command: "./assets/scripts/lnd2.sh"
 
 ports:
     - port: 8080
@@ -19,5 +18,13 @@ ports:
     - port: 11009
       onOpen: ignore
     - port: 9734
+      onOpen: ignore
+    - port: 8332
+      onOpen: ignore
+    - port: 18443
+      onOpen: ignore
+    - port: 28332
+      onOpen: ignore
+    - port: 28333
       onOpen: ignore
 
