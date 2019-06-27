@@ -30,7 +30,7 @@ RUN mkdir -p /workspace/lnd/.lnd2
 RUN mkdir -p /workspace/bitcoin/.bitcoin
 
 RUN cd /workspace/bin \
-    && wget -O lnd-linux-386-v0.7.0-beta-rc2.tar.gz https://github.com/lightningnetwork/lnd/releases/download/v0.7.0-beta-rc2/lnd-linux-amd64-v0.7.0-beta-rc2.tar.gz
+    && wget -O lnd-linux-386-v0.7.0-beta-rc2.tar.gz https://github.com/lightningnetwork/lnd/releases/download/v0.7.0-beta-rc2/lnd-linux-amd64-v0.7.0-beta-rc2.tar.gz \
     && tar -xzf lnd-linux-386-v0.7.0-beta-rc2.tar.gz  && rm lnd-linux-386-v0.7.0-beta-rc2.tar.gz \
     && wget -O bitcoin-0.18.0-x86_64-linux-gnu.tar.gz https://bitcoincore.org/bin/bitcoin-core-0.18.0/bitcoin-0.18.0-x86_64-linux-gnu.tar.gz \
     && tar -xzf bitcoin-0.18.0-x86_64-linux-gnu.tar.gz && rm bitcoin-0.18.0-x86_64-linux-gnu.tar.gz \
