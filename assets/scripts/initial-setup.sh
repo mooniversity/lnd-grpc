@@ -17,6 +17,6 @@ wget -O bitcoin-0.18.0-x86_64-linux-gnu.tar.gz https://bitcoincore.org/bin/bitco
 tar -xzf bitcoin-0.18.0-x86_64-linux-gnu.tar.gz && rm bitcoin-0.18.0-x86_64-linux-gnu.tar.gz
 
 # Copy conf files
-cd /workspace/bitcoin/.bitcoin && wget -O bitcoin.conf https://github.com/willcl-ark/lnd-grpc/blob/regtest/bitcoin.conf
-cd /workspace/lnd/.lnd && wget -O lnd.conf https://github.com/willcl-ark/lnd-grpc/blob/regtest/lnd1.conf
-cd /workspace/lnd/.lnd2 && wget -O lnd.conf https://github.com/willcl-ark/lnd-grpc/blob/regtest/lnd2.conf
+cd /workspace/bitcoin/.bitcoin && wget -O bitcoin.conf https://raw.githubusercontent.com/willcl-ark/lnd-grpc/regtest/bitcoin.conf
+cd /workspace/lnd/.lnd && wget -O lnd.conf https://raw.githubusercontent.com/willcl-ark/lnd-grpc/regtest/lnd1.conf
+cd /workspace/lnd/.lnd2 && wget -O lnd.conf https://raw.githubusercontent.com/willcl-ark/lnd-grpc/regtest/lnd2.conf
