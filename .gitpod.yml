@@ -1,11 +1,11 @@
 image:
     file: Dockerfile
 tasks:
-    - before: "./assets/scripts/initial-setup.sh" && exit
-      command: "./assets/scripts/recurring-setup.sh" && exit
-      command: /workspace/bin/bitcoin-0.18.0/bin/bitcoind -datadir=/workspace/bitcoin/.bitcoin
-      command: /workspace/bin/lnd-linux-amd64-v0.7.0-beta-rc2/lnd --lnddir=/workspace/lnd/.lnd --routing.assumechanvalid 1
-      command: /workspace/bin/lnd-linux-amd64-v0.7.0-beta-rc2/lnd --lnddir=/workspace/lnd/.lnd2 --routing.assumechanvalid 1
+    - init: "./assets/scripts/initial-setup.sh" && exit
+    - command: "./assets/scripts/recurring-setup.sh" && exit
+    - command: /workspace/bin/bitcoin-0.18.0/bin/bitcoind -datadir=/workspace/bitcoin/.bitcoin
+    - command: /workspace/bin/lnd-linux-amd64-v0.7.0-beta-rc2/lnd --lnddir=/workspace/lnd/.lnd --routing.assumechanvalid 1
+    - command: /workspace/bin/lnd-linux-amd64-v0.7.0-beta-rc2/lnd --lnddir=/workspace/lnd/.lnd2 --routing.assumechanvalid 1
 
 ports:
     - port: 8080
