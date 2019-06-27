@@ -13,8 +13,8 @@ RUN /bin/bash -c  'source $HOME/.bashrc'
 # add aliases
 RUN echo "alias python='python3'" >> $HOME/.bash_aliases
 RUN echo "alias pip='pip3'" >> $HOME/.bash_aliases
-RUN echo "alias lnd1='/workspace/bin/lnd-linux-amd64-v0.7.0-beta-rc2/lnd --lnddir=/workspace/lnd/.lnd --routing.assumechanvalid 1'" >> $HOME/.bash_aliases
-RUN echo "alias lnd2='/workspace/bin/lnd-linux-amd64-v0.7.0-beta-rc2/lnd --lnddir=/workspace/lnd/.lnd2 --routing.assumechanvalid 1'" >> $HOME/.bash_aliases
+RUN echo "alias lnd1='/workspace/bin/lnd-linux-amd64-v0.7.0-beta-rc2/lnd --lnddir=/workspace/lnd/.lnd'" >> $HOME/.bash_aliases
+RUN echo "alias lnd2='/workspace/bin/lnd-linux-amd64-v0.7.0-beta-rc2/lnd --lnddir=/workspace/lnd/.lnd2'" >> $HOME/.bash_aliases
 RUN echo "alias alice='/workspace/bin/lnd-linux-amd64-v0.7.0-beta-rc2/lncli --network regtest --lnddir /workspace/lnd/.lnd'" >> $HOME/.bash_aliases
 RUN echo "alias bob='/workspace/bin/lnd-linux-amd64-v0.7.0-beta-rc2/lncli --network regtest --lnddir /workspace/lnd/.lnd2 --rpcserver=localhost:11009'" >> $HOME/.bash_aliases
 RUN echo "alias bitcoind='/workspace/bin/bitcoin-0.18.0/bin/bitcoind -datadir=/workspace/bitcoin/.bitcoin'" >> $HOME/.bash_aliases
