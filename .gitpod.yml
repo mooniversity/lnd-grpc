@@ -1,9 +1,8 @@
 image:
     file: Dockerfile
 tasks:
-    - command: "./assets/scripts/bitcoind.sh"
-    - command: "./assets/scripts/lnd1.sh"
-    - command: "./assets/scripts/lnd2.sh"
+    - init: "./assets/scripts/initial-setup.sh"
+    - command: "./assets/scripts/recurring_setup.sh"
 
 ports:
     - port: 8080
