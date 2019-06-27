@@ -2,8 +2,10 @@ image:
     file: Dockerfile
 tasks:
     - init: "./assets/scripts/initial-setup.sh"
-      command: "./assets/scripts/recurring-setup.sh"
-    - init: "code hello.py && clear"
+    - command: "./assets/scripts/recurring-setup.sh"
+    - command: bitcoind
+    - command: lnd1
+    - command: lnd2
 
 ports:
     - port: 8080
